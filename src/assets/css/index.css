@@ -1,0 +1,52 @@
+input::-webkit-input-placeholder {
+  /* Chrome/Opera/Safari */
+  color: white;
+}
+
+input:-ms-input-placeholder {
+  /* IE 10+ */
+  color: white;
+}
+
+input:-moz-placeholder {
+  /* Firefox 18- */
+  color: white;
+  opacity: 1;
+}
+
+input::-moz-placeholder {
+  /* Firefox 19+ */
+  color: white;
+  opacity: 1;
+}
+
+.date-style .date-style.el-date-picker {
+  width: 10px !important;
+  height: 20px !important;
+  line-height: 0px;
+}
+.date-style .date-style.el-date-picker .el-picker-panel__content {
+  width: 155px !important;
+  height: 180px !important;
+}
+.date-style .date-style.el-date-picker table {
+  font-size: 11px;
+}
+.date-style .date-style.el-date-picker .el-date-picker__header {
+  margin: 5px;
+}
+.date-style .date-style.el-date-picker .el-date-picker__header-label {
+  font-size: 11px;
+}
+.date-style .date-style.el-date-picker .el-date-picker__header el-date-picker__header-label {
+  font-size: 11px;
+}
+.date-style .date-style.el-date-picker .el-date-table td,
+.date-style .date-style.el-date-picker .el-date-table td div {
+  height: 22px;
+}
+.date-style .date-style.el-date-picker .el-month-table td .cell,
+.date-style .date-style.el-date-picker .el-year-table td .cell,
+.date-style .date-style.el-date-picker .el-date-table td .cell {
+  width: 100%;
+}/*# sourceMappingURL=index.css.map */

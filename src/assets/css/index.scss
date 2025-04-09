@@ -1,0 +1,77 @@
+//主题颜色改变
+$sideBg: #304156; //侧边背景
+$cardBg: #fff; //白色背景
+$sideHover: #263455; //侧边选中状态
+$fontBlack: #000; //字体颜色
+$fontWhite: #ffffff; //字体颜色
+$bg: #eeeeee; //灰色背景
+$border: #969696; // 边框颜色
+$fontA: #409eff; // 超链接字体颜色
+input::-webkit-input-placeholder {
+  /* Chrome/Opera/Safari */
+  color: white;
+}
+input:-ms-input-placeholder {
+  /* IE 10+ */
+  color: white;
+}
+input:-moz-placeholder {
+  /* Firefox 18- */
+  color: white;
+  opacity: 1;
+}
+input::-moz-placeholder {
+  /* Firefox 19+ */
+  color: white;
+  opacity: 1;
+}
+
+.date-style {
+  .date-style.el-date-picker {
+    width: 10px !important;
+    height: 20px !important;
+
+    // .el-picker-panel {
+    line-height: 0px;
+    // }
+    .el-picker-panel__content {
+      width: 155px !important;
+      height: 180px !important;
+    }
+    table {
+      font-size: 11px;
+    }
+    .el-date-picker__header {
+      margin: 5px;
+    }
+    .el-date-picker__header-label {
+      font-size: 11px;
+    }
+    .el-date-picker__header el-date-picker__header-label {
+      font-size: 11px;
+    }
+    .el-date-table td,
+    .el-date-table td div {
+      height: 22px;
+    }
+    .el-month-table td .cell,
+    .el-year-table td .cell,
+    .el-date-table td .cell {
+      width: 100%;
+    }
+  }
+}
+:deep(.el-table) {
+  --el-table-header-bg-color: $cardBg;
+  --el-table-border-color:#ccc;
+  --el-table-header-text-color: $fontBlack;
+  --el-table-tr-bg-color: $cardBg;
+  --el-table-text-color: $fontBlack;
+  --el-table-row-hover-bg-color: : $border;
+  --el-table-bg-color: $cardBg;
+  --el-table-expanded-cell-bg-color: $cardBg;
+  --el-table-current-row-bg-color: $cardBg;
+  border-radius: 5px;
+  width: 90%;
+}
+
