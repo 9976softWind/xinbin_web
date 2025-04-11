@@ -5,14 +5,18 @@ defineOptions({
   inheritAttrs: false,
 });
 
-import { deleteUsers, exportUser, importUser } from "@/api/user";
-import { getCataFileList, uploadCataFile } from "@/api/cataFile";
+import { exportUser } from "@/api/user";
+import {
+  getCataFileList,
+  uploadCataFile,
+  deleteCataFile,
+} from "@/api/cataFile";
 import { CataFilePageVO, CataFilePageQuery } from "@/api/cataFile/type";
 
 import { getCataOptions } from "@/api/cata";
 
 import type { UploadFile, UploadInstance } from "element-plus";
-import { genFileId } from "element-plus";
+import TextViewer from "./components/textView.vue";
 
 const queryFormRef = ref(ElForm); // 查询表单
 
@@ -27,7 +31,7 @@ const queryParams = reactive<CataFilePageQuery>({
 const total = ref(0); // 数据总数
 const pageData = ref<CataFilePageVO[]>(); // 目录文件分页数据
 const cataList = ref<OptionType[]>(); // 目录下拉数据源
-
+const fileViewUrl = ref("");
 // 弹窗对象
 const dialog = reactive({
   visible: false,
@@ -79,10 +83,10 @@ async function loadCataOptions() {
 /**
  * 打开弹窗
  *
- * @param type 弹窗类型  目录文件表单：user-form | 目录文件导入：cataFile-import
+ * @param type 弹窗类型  目录文件导入：cataFile-import | 文件预览：cataFile-view
  * @param id 目录文件ID
  */
-async function openDialog(type: string, id?: number) {
+async function openDialog(type: string, filePath?: string) {
   dialog.visible = true;
   dialog.type = type;
   if (dialog.type === "cataFile-import") {
@@ -90,13 +94,17 @@ async function openDialog(type: string, id?: number) {
     dialog.title = "上传目录文件";
     dialog.width = 600;
     loadCataOptions();
+  } else if (dialog.type === "cataFile-view") {
+    dialog.title = "查看";
+    dialog.width = 800;
+    fileViewUrl.value = filePath!;
   }
 }
 
 /**
  * 关闭弹窗
  *
- * @param type 弹窗类型  目录文件表单：user-form | 目录文件导入：cataFile-import
+ * @param type 弹窗类型 目录文件导入：cataFile-import | 文件预览：cataFile-view
  */
 function closeDialog() {
   dialog.visible = false;
@@ -114,7 +122,6 @@ function viewFile(filePath: string) {
 }
 /** 表单提交 */
 const handleSubmit = useThrottleFn(() => {
-  console.log(importData);
   if (dialog.type === "cataFile-import") {
     if (!importData?.cataId) {
       ElMessage.warning("请选择目录");
@@ -134,18 +141,18 @@ const handleSubmit = useThrottleFn(() => {
 
 /** 删除目录文件 */
 function handleDelete(id?: number) {
-  const userIds = [id || removeIds.value].join(",");
-  if (!userIds) {
+  const fileIds = [id || removeIds.value].join(",");
+  if (!fileIds) {
     ElMessage.warning("请勾选删除项");
     return;
   }
 
-  ElMessageBox.confirm("确认删除目录文件?", "警告", {
+  ElMessageBox.confirm("确认删除该文件?", "警告", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
   }).then(function () {
-    deleteUsers(userIds).then(() => {
+    deleteCataFile(fileIds).then(() => {
       ElMessage.success("删除成功");
       resetQuery();
     });
@@ -153,8 +160,6 @@ function handleDelete(id?: number) {
 }
 
 const handleFileChange = (file: UploadFile, files: UploadFile[]) => {
-  console.log(file);
-  console.log(files);
   // 验证文件类型
   const isTxt = file.name?.split(".").pop()?.toLowerCase() === "txt";
   // 验证文件大小（示例限制5MB）
@@ -313,18 +318,18 @@ onMounted(() => {
               align="center"
             >
               <template #default="scope">
-                <el-button
+                <!-- <el-button
                   type="primary"
                   link
                   size="small"
                   @click="openDialog('user-form', scope.row.id)"
                   ><i-ep-edit />编辑</el-button
-                >
+                > -->
                 <el-button
                   type="primary"
                   link
                   size="small"
-                  @click="viewFile(scope.row.filePath)"
+                  @click="openDialog('cataFile-view', scope.row.filePath)"
                   ><i-ep-view />查看</el-button
                 >
                 <el-button
@@ -379,7 +384,7 @@ onMounted(() => {
             drag
             accept=".txt"
             multiple
-            :limit="2"
+            :limit="10"
             :auto-upload="false"
             :file-list="importData.fileList"
             :on-change="handleFileChange"
@@ -393,11 +398,14 @@ onMounted(() => {
               <em>点击上传</em>
             </div>
             <template #tip>
-              <div>每次至多上次2个文件，文件格式：txt</div>
+              <div>每次至多上次10个文件，文件格式：txt</div>
             </template>
           </el-upload>
         </el-form-item>
       </el-form>
+
+      <TextViewer v-if="dialog.type === 'cataFile-view'" :url="fileViewUrl" />
+
       <!-- 弹窗底部操作按钮 -->
       <template #footer>
         <div class="dialog-footer">

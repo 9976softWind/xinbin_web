@@ -1,21 +1,22 @@
 import request from "@/utils/request";
 import { AxiosPromise } from "axios";
-import { CataFilePageQuery, CataFilePageVO } from './type';
+import { CataFilePageQuery, CataFilePageVO } from "./type";
 import { UploadFile } from "element-plus";
 
 /**
  * 获取文件分页列表
- * @param params 
- * @returns 
+ * @param params
+ * @returns
  */
-export function getCataFileList(params: CataFilePageQuery): AxiosPromise<PageResult<CataFilePageVO[]>> {
+export function getCataFileList(
+  params: CataFilePageQuery
+): AxiosPromise<PageResult<CataFilePageVO[]>> {
   return request({
     url: "/api/v1/cata-file/list",
     method: "get",
-    params: params
+    params: params,
   });
 }
-
 
 export function uploadCataFile(cataId: number, files: UploadFile[]) {
   const formData = new FormData();
@@ -28,16 +29,22 @@ export function uploadCataFile(cataId: number, files: UploadFile[]) {
     method: "post",
     data: formData,
     headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+      "Content-Type": "multipart/form-data",
+    },
   });
 }
 
+export function deleteCataFile(ids: string) {
+  return request({
+    url: "/api/v1/cata-file/" + ids,
+    method: "delete",
+  });
+}
 
 // /**
 //  * 删除站点数据
-//  * @param id 
-//  * @returns 
+//  * @param id
+//  * @returns
 //  */
 // export function deleteStationData(id: number) {
 //   return request({
@@ -48,8 +55,8 @@ export function uploadCataFile(cataId: number, files: UploadFile[]) {
 
 // /**
 //  * 修改站点数据
-//  * @param devType 
-//  * @returns 
+//  * @param devType
+//  * @returns
 //  */
 // export function setStationData(data: any, id: number,) {
 //   return request({
@@ -58,5 +65,3 @@ export function uploadCataFile(cataId: number, files: UploadFile[]) {
 //     data: data,
 //   });
 // }
-
-
