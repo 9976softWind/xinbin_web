@@ -5,7 +5,6 @@ defineOptions({
   inheritAttrs: false,
 });
 
-import { exportUser } from "@/api/user";
 import {
   getCataFileList,
   uploadCataFile,
@@ -18,12 +17,15 @@ import { getCataOptions } from "@/api/cata";
 import type { UploadFile, UploadInstance } from "element-plus";
 import TextViewer from "./components/textView.vue";
 
+import JSZip from "jszip";
+
 const queryFormRef = ref(ElForm); // 查询表单
 
 const uploadRef = ref<UploadInstance>(); // 上传组件
 
 const loading = ref(false); //  加载状态
 const removeIds = ref([]); // 删除ID集合 用于批量删除
+const downLoadUrls = ref([]);
 const queryParams = reactive<CataFilePageQuery>({
   pageNum: 1,
   pageSize: 10,
@@ -32,12 +34,14 @@ const total = ref(0); // 数据总数
 const pageData = ref<CataFilePageVO[]>(); // 目录文件分页数据
 const cataList = ref<OptionType[]>(); // 目录下拉数据源
 const fileViewUrl = ref("");
+const fileViewName = ref("");
 // 弹窗对象
 const dialog = reactive({
   visible: false,
   type: "user-form",
   width: 800,
   title: "",
+  fullscreenFlag: false,
 });
 
 // 目录文件导入数据
@@ -71,6 +75,7 @@ function resetQuery() {
 /** 行选中 */
 function handleSelectionChange(selection: any) {
   removeIds.value = selection.map((item: any) => item.id);
+  downLoadUrls.value = selection.map((item: any) => item.filePath);
 }
 
 /** 加载目录下拉数据源 */
@@ -80,31 +85,35 @@ async function loadCataOptions() {
   });
 }
 
+function convertToMB(input: string) {
+  return (Number.parseInt(input.trim()) / 1024).toFixed(2);
+}
+
 /**
  * 打开弹窗
  *
- * @param type 弹窗类型  目录文件导入：cataFile-import | 文件预览：cataFile-view
+ * @param type 弹窗类型  文件上传：cataFile-import | 文件查看：cataFile-view
  * @param id 目录文件ID
  */
-async function openDialog(type: string, filePath?: string) {
+async function openDialog(type: string, file?: CataFilePageVO) {
   dialog.visible = true;
   dialog.type = type;
   if (dialog.type === "cataFile-import") {
-    // 目录文件导入弹窗
-    dialog.title = "上传目录文件";
+    dialog.title = "文件上传";
     dialog.width = 600;
     loadCataOptions();
   } else if (dialog.type === "cataFile-view") {
-    dialog.title = "查看";
+    dialog.title = "文件查看";
     dialog.width = 800;
-    fileViewUrl.value = filePath!;
+    fileViewUrl.value = file!.filePath;
+    fileViewName.value = file!.fileName;
   }
 }
 
 /**
  * 关闭弹窗
  *
- * @param type 弹窗类型 目录文件导入：cataFile-import | 文件预览：cataFile-view
+ * @param type 弹窗类型 文件上传：cataFile-import | 文件查看：cataFile-view
  */
 function closeDialog() {
   dialog.visible = false;
@@ -113,13 +122,6 @@ function closeDialog() {
   }
 }
 
-/**
- * 预览文件
- * @param filePath
- */
-function viewFile(filePath: string) {
-  console.log(filePath);
-}
 /** 表单提交 */
 const handleSubmit = useThrottleFn(() => {
   if (dialog.type === "cataFile-import") {
@@ -132,7 +134,7 @@ const handleSubmit = useThrottleFn(() => {
       return false;
     }
     uploadCataFile(importData?.cataId, importData.fileList).then((response) => {
-      ElMessage.success(response.data);
+      ElMessage.success("文件上传成功，上传数量：" + response.data);
       closeDialog();
       resetQuery();
     });
@@ -180,29 +182,41 @@ function handleFileExceed(files: any) {
   return;
 }
 
-/** 导出目录文件 */
-function handleExport() {
-  exportUser(queryParams).then((response: any) => {
-    const fileData = response.data;
-    const fileName = decodeURI(
-      response.headers["content-disposition"].split(";")[1].split("=")[1]
-    );
-    const fileType =
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8";
+/** 下载目录文件 */
+async function handleDownloadFile() {
+  try {
+    const zip = new JSZip();
+    // 并行获取所有文件
+    const fetchPromises = downLoadUrls.value.map(async (url) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+      console.log(response);
 
-    const blob = new Blob([fileData], { type: fileType });
-    const downloadUrl = window.URL.createObjectURL(blob);
-
-    const downloadLink = document.createElement("a");
-    downloadLink.href = downloadUrl;
-    downloadLink.download = fileName;
-
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-
-    document.body.removeChild(downloadLink);
-    window.URL.revokeObjectURL(downloadUrl);
-  });
+      return {
+        data: await response.blob(),
+        name: (url as String).split("/").pop() || `${Date.now()}.txt`,
+      };
+    });
+    // 等待所有请求完成
+    const files = await Promise.all(fetchPromises);
+    // 将文件添加到 ZIP
+    files.forEach(({ data, name }) => {
+      zip.file(name, data);
+    });
+    // 生成 ZIP 文件
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    // 触发下载
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(zipBlob);
+    link.download = `files-${Date.now()}.zip`;
+    link.click();
+    // 清理资源
+    URL.revokeObjectURL(link.href);
+    return true;
+  } catch (error) {
+    console.error("打包下载失败:", error);
+    return false;
+  }
 }
 
 onMounted(() => {
@@ -267,9 +281,22 @@ onMounted(() => {
                 </el-tooltip>
               </div>
               <div>
-                <el-button class="ml-3" @click="handleExport"
-                  ><template #icon><i-ep-download /></template>导出</el-button
+                <el-tooltip
+                  effect="dark"
+                  :disabled="downLoadUrls.length !== 0"
+                  content="请选择需下载的文件"
+                  placement="top"
                 >
+                  <span style="margin-left: 10px">
+                    <el-button
+                      class="ml-3"
+                      :disabled="downLoadUrls.length == 0"
+                      @click="handleDownloadFile"
+                      ><template #icon><i-ep-download /></template
+                      >下载</el-button
+                    >
+                  </span>
+                </el-tooltip>
               </div>
             </div>
           </template>
@@ -298,7 +325,11 @@ onMounted(() => {
               width="120"
               align="center"
               prop="fileSize"
-            />
+            >
+              <template #default="scope">
+                <el-tag>{{ convertToMB(scope.row.fileSize) + "kB" }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column
               label="文件类型"
               width="100"
@@ -329,7 +360,7 @@ onMounted(() => {
                   type="primary"
                   link
                   size="small"
-                  @click="openDialog('cataFile-view', scope.row.filePath)"
+                  @click="openDialog('cataFile-view', scope.row)"
                   ><i-ep-view />查看</el-button
                 >
                 <el-button
@@ -359,6 +390,7 @@ onMounted(() => {
       v-model="dialog.visible"
       :title="dialog.title"
       :width="dialog.width"
+      :fullscreen="dialog.fullscreenFlag"
       append-to-body
       @close="closeDialog"
     >
@@ -404,10 +436,12 @@ onMounted(() => {
         </el-form-item>
       </el-form>
 
-      <TextViewer v-if="dialog.type === 'cataFile-view'" :url="fileViewUrl" />
+      <div v-if="dialog.type === 'cataFile-view'">
+        <el-tag type="success">{{ fileViewName }}</el-tag>
+        <TextViewer :url="fileViewUrl" />
+      </div>
 
-      <!-- 弹窗底部操作按钮 -->
-      <template #footer>
+      <template #footer v-if="dialog.type === 'cataFile-import'">
         <div class="dialog-footer">
           <el-button type="primary" @click="handleSubmit">确 定</el-button>
           <el-button @click="closeDialog">取 消</el-button>

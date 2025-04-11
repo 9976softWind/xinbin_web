@@ -24,6 +24,7 @@
     "dayjs": "^1.11.10",
     "echarts": "^5.4.3",
     "element-plus": "^2.4.2",
+    "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
     "mockjs": "^1.1.0",
     "net": "^1.0.2",
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@iconify-json/ep": "^1.1.12",
+    "@types/jszip": "^3.4.1",
     "@types/lodash": "^4.14.201",
     "@types/nprogress": "^0.2.3",
     "@types/path-browserify": "^1.0.2",

@@ -36,7 +36,7 @@ const cataName = ref(); // 目录名称
 
 const emits = defineEmits(["node-click"]);
 
-const deptId = useVModel(props, "modelValue", emits);
+const cataId = useVModel(props, "modelValue", emits);
 
 watchEffect(
   () => {
@@ -57,7 +57,7 @@ function handleFilter(value: string, data: any) {
 
 /** 目录树节点 Click */
 function handleNodeClick(data: { [key: string]: any }) {
-  deptId.value = data.value;
+  cataId.value = data.value;
   emits("node-click");
 }
 
