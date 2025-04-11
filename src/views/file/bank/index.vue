@@ -15,7 +15,7 @@ import {
   exportUser,
   importUser,
 } from "@/api/user";
-import { getDeptOptions } from "@/api/dept";
+import { getCataOptions } from "@/api/cata";
 import { getRoleOptions } from "@/api/role";
 
 import { UserForm, UserQuery, UserPageVO } from "@/api/user/types";
@@ -35,7 +35,7 @@ const queryParams = reactive<UserQuery>({
 const dateTimeRange = ref("");
 const total = ref(0); // 数据总数
 const pageData = ref<UserPageVO[]>(); // 用户分页数据
-const deptList = ref<OptionType[]>(); // 部门下拉数据源
+const cataList = ref<OptionType[]>(); // 目录下拉数据源
 const roleList = ref<OptionType[]>(); // 角色下拉数据源
 
 watch(dateTimeRange, (newVal) => {
@@ -69,7 +69,7 @@ const importData = reactive({
 const rules = reactive({
   username: [{ required: true, message: "用户名不能为空", trigger: "blur" }],
   nickname: [{ required: true, message: "用户昵称不能为空", trigger: "blur" }],
-  deptId: [{ required: true, message: "所属部门不能为空", trigger: "blur" }],
+  deptId: [{ required: true, message: "所属目录不能为空", trigger: "blur" }],
   roleIds: [{ required: true, message: "用户角色不能为空", trigger: "blur" }],
   email: [
     {
@@ -143,10 +143,10 @@ async function loadRoleOptions() {
   });
 }
 
-/** 加载部门下拉数据源 */
-async function loadDeptOptions() {
-  getDeptOptions().then((response) => {
-    deptList.value = response.data;
+/** 加载目录下拉数据源 */
+async function loadCataOptions() {
+  getCataOptions().then((response) => {
+    cataList.value = response.data;
   });
 }
 
@@ -162,7 +162,7 @@ async function openDialog(type: string, id?: number) {
 
   if (dialog.type === "user-form") {
     // 用户表单弹窗
-    await loadDeptOptions();
+    await loadCataOptions();
     await loadRoleOptions();
     if (id) {
       dialog.title = "修改用户";
@@ -176,7 +176,7 @@ async function openDialog(type: string, id?: number) {
     // 用户导入弹窗
     dialog.title = "导入用户";
     dialog.width = 600;
-    loadDeptOptions();
+    loadCataOptions();
   }
 }
 
@@ -227,7 +227,7 @@ const handleSubmit = useThrottleFn(() => {
     });
   } else if (dialog.type === "user-import") {
     if (!importData?.deptId) {
-      ElMessage.warning("请选择部门");
+      ElMessage.warning("请选择目录");
       return false;
     }
     if (!importData?.file) {
@@ -310,9 +310,9 @@ onMounted(() => {
 <template>
   <div class="app-container">
     <el-row :gutter="20">
-      <!-- 部门树 -->
+      <!-- 目录树 -->
       <el-col :lg="4" :xs="24" class="mb-[12px]">
-        <dept-tree v-model="queryParams.deptId" @node-click="handleQuery" />
+        <cata-tree v-model="queryParams.deptId" @node-click="handleQuery" />
       </el-col>
 
       <!-- 用户列表 -->
@@ -435,7 +435,7 @@ onMounted(() => {
             />
 
             <el-table-column
-              label="部门"
+              label="目录"
               width="120"
               align="center"
               prop="deptName"
@@ -534,11 +534,11 @@ onMounted(() => {
           <el-input v-model="formData.nickname" placeholder="请输入用户昵称" />
         </el-form-item>
 
-        <el-form-item label="所属部门" prop="deptId">
+        <el-form-item label="所属目录" prop="deptId">
           <el-tree-select
             v-model="formData.deptId"
-            placeholder="请选择所属部门"
-            :data="deptList"
+            placeholder="请选择所属目录"
+            :data="cataList"
             filterable
             check-strictly
             :render-after-expand="false"
@@ -590,11 +590,11 @@ onMounted(() => {
         :model="importData"
         label-width="100px"
       >
-        <el-form-item label="部门">
+        <el-form-item label="目录">
           <el-tree-select
             v-model="importData.deptId"
-            placeholder="请选择部门"
-            :data="deptList"
+            placeholder="请选择目录"
+            :data="cataList"
             filterable
             check-strictly
           />

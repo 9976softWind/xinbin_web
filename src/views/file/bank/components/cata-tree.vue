@@ -1,16 +1,16 @@
 <!-- 文件目录树 -->
 <template>
   <el-card shadow="never">
-    <el-input v-model="deptName" placeholder="部门名称" clearable>
+    <el-input v-model="cataName" placeholder="目录名称" clearable>
       <template #prefix>
         <i-ep-search />
       </template>
     </el-input>
 
     <el-tree
-      ref="deptTreeRef"
+      ref="cataTreeRef"
       class="mt-2"
-      :data="deptList"
+      :data="cataList"
       :props="{ children: 'children', label: 'label', disabled: '' }"
       :expand-on-click-node="false"
       :filter-node-method="handleFilter"
@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { getDeptOptions } from "@/api/dept";
+import { getCataOptions } from "@/api/cata";
 
 const props = defineProps({
   modelValue: {
@@ -30,9 +30,9 @@ const props = defineProps({
   },
 });
 
-const deptList = ref<OptionType[]>(); // 部门列表
-const deptTreeRef = ref(ElTree); // 部门树
-const deptName = ref(); // 部门名称
+const cataList = ref<OptionType[]>(); // 目录列表
+const cataTreeRef = ref(ElTree); // 目录树
+const cataName = ref(); // 目录名称
 
 const emits = defineEmits(["node-click"]);
 
@@ -40,14 +40,14 @@ const deptId = useVModel(props, "modelValue", emits);
 
 watchEffect(
   () => {
-    deptTreeRef.value.filter(deptName.value);
+    cataTreeRef.value.filter(cataName.value);
   },
   {
     flush: "post", // watchEffect会在DOM挂载或者更新之前就会触发，此属性控制在DOM元素更新后运行
   }
 );
 
-/** 部门筛选 */
+/** 目录筛选 */
 function handleFilter(value: string, data: any) {
   if (!value) {
     return true;
@@ -55,15 +55,15 @@ function handleFilter(value: string, data: any) {
   return data.label.indexOf(value) !== -1;
 }
 
-/** 部门树节点 Click */
+/** 目录树节点 Click */
 function handleNodeClick(data: { [key: string]: any }) {
   deptId.value = data.value;
   emits("node-click");
 }
 
 onBeforeMount(() => {
-  getDeptOptions().then((response) => {
-    deptList.value = response.data;
+  getCataOptions().then((response) => {
+    cataList.value = response.data;
   });
 });
 </script>
